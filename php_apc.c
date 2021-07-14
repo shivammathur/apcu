@@ -93,12 +93,12 @@ static void php_apc_init_globals(zend_apcu_globals* apcu_globals)
 static PHP_INI_MH(OnUpdateShmSegments) /* {{{ */
 {
 #if APC_MMAP
-	if (zend_atoi(new_value->val, new_value->len)!=1) {
+	if (ZEND_ATOL(new_value->val)!=1) {
 		php_error_docref(NULL, E_WARNING, "apc.shm_segments setting ignored in MMAP mode");
 	}
 	APCG(shm_segments) = 1;
 #else
-	APCG(shm_segments) = zend_atoi(new_value->val, new_value->len);
+	APCG(shm_segments) = ZEND_ATOL(new_value->val);
 #endif
 	return SUCCESS;
 }
@@ -106,20 +106,18 @@ static PHP_INI_MH(OnUpdateShmSegments) /* {{{ */
 
 static PHP_INI_MH(OnUpdateShmSize) /* {{{ */
 {
-	zend_long s = zend_atol(new_value->val, new_value->len);
+	zend_long s = ZEND_ATOL(new_value->val);
 
 	if (s <= 0) {
 		return FAILURE;
 	}
-
-	if (s < Z_L(1048576)) {
+	if (s < 1) {
 		/* if it's less than 1Mb, they are probably using the old syntax */
 		php_error_docref(
 			NULL, E_WARNING, "apc.shm_size now uses M/G suffixes, please update your ini files");
-		s = s * Z_L(1048576);
 	}
 
-	APCG(shm_size) = s;
+	APCG(shm_size) = s * Z_L(1048576);
 
 	return SUCCESS;
 }
